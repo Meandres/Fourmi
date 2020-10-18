@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1603039354 source:/home/ilya/Documents/L3/SI/Fourmi/main.cpp
+	<cstdio>
+	<cstdlib>
+	<GL/freeglut.h>
+	<jpeglib.h>
+	<jerror.h>
+	<cmath>
+

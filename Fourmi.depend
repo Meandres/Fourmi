@@ -7,3 +7,11 @@
 	<jerror.h>
 	<cmath>
 
+1603207819 source:/home/ilya/Documents/SI/Fourmi/main.cpp
+	<cstdio>
+	<cstdlib>
+	<GL/freeglut.h>
+	<jpeglib.h>
+	<jerror.h>
+	<cmath>
+

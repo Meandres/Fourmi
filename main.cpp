@@ -32,7 +32,6 @@ void souris(int boutton, int etat,int x,int y);
 void sourismouv(int x,int y);
 void redim(int l,int h);
 void loadJpegImage(char *fichier, unsigned char* image);
-void affiche_sphere(float rad, float r, float g, float b, int M, int P);
 void affiche_abdomen(int T, int F, float r, float g, float b); //pour afficher un abdomen de la couleur dont les composants sont spécifiés en argument
 void affiche_abdomen(int T, int F, int indiceTex); //pour afficher un abdomen en utilisant la texture d'indice spécifié en parametre dans la liste des textures chargées
 void idle();
@@ -40,17 +39,12 @@ void idle();
 int main(int argc,char **argv)
 
 {
-  unsigned char *imLune, *imTerre, *imSoleil;
-  /* Chargement de la texture */
-  //loadJpegImage("./lune.jpg", imLune);
-  //loadJpegImage("./terre.jpg", imTerre);
-  //loadJpegImage("./soleil.jpg", imSoleil);
 
   /* Creation de la fenetre OpenGL */
   glutInit(&argc,argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   glutInitWindowSize(1000,1000);
-  glutCreateWindow("Systeme Solaire");
+  glutCreateWindow("Fourmi");
 
   /* Initialisation de l'etat d'OpenGL */
   glClearColor(0.0,0.0,0.0,0.0);
@@ -60,7 +54,7 @@ int main(int argc,char **argv)
   /* Mise en place de la projection perspective */
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(70.0,1,1.0,50.0);
+  gluPerspective(20.0,1,1.0,20.0);
   glMatrixMode(GL_MODELVIEW);
 
   /* Parametrage du placage de textures */
@@ -102,12 +96,14 @@ void affichage()
 
   glLoadIdentity();
 
-  gluLookAt(20.0,20.0,20.0,  0.0,0.0,0.0,  0.0,0.0,1.0);
+  gluLookAt(10.0,10.0,10.0,  0.0,0.0,0.0,  0.0,0.0,1.0);
   glRotatef(angley,1.0,0.0,0.0);
   glRotatef(anglex,0.0,1.0,0.0);
 
-  affiche_abdomen(10, 20, 1.0, 1.0, 1.0);
+  affiche_abdomen(20, 20, 1.0, 1.0, 1.0);
 
+
+  /*
   //Repère
     //axe x en rouge
     glBegin(GL_LINES);
@@ -126,7 +122,7 @@ void affichage()
     	glColor3f(0.0,0.0,1.0);
     	glVertex3f(0, 0,0.0);
     	glVertex3f(0, 0,10.0);
-    glEnd();
+    glEnd();*/
 
   glutSwapBuffers();
 
@@ -138,44 +134,17 @@ void idle(){
     angRotLuneTerre+=12*pas;
     glutPostRedisplay();
 }
-void affiche_sphere(float rad, float r, float g, float b, int M, int P){
-    Point pS[P*M];
-    int fS[(P-1)*M][4];
-    for(int j=0; j<P; j++){
-        for(int i=0; i<M; i++){
-            pS[j*M+i]={rad*cos(2*i*M_PI/(M+0.0))*cos(-M_PI/2+M_PI*j/P), rad*sin(2*i*M_PI/(M+0.0))*cos(-M_PI/2+M_PI*j/P), rad*sin(-M_PI/2+M_PI*j/P)};
-        }
-    }
-    for(int j=0; j<P-1; j++){
-        for(int i=0; i<M; i++){
-            fS[j*M+i][0]=i+j*M;
-            fS[j*M+i][1]=(i+1)%M+j*M;
-            fS[j*M+i][2]=(i+1)%M+(j+1)*M;
-            fS[j*M+i][3]=i+(j+1)*M;
-        }
-    }
-    for(int j=0; j<P-1; j++){
-        for(int i=0; i<M; i++){
-            glBegin(GL_QUADS);
-                glColor3f(r, g, b);
-                glVertex3f(pS[fS[j*M+i][0]].x, pS[fS[j*M+i][0]].y, pS[fS[j*M+i][0]].z);
-                glVertex3f(pS[fS[j*M+i][1]].x, pS[fS[j*M+i][1]].y, pS[fS[j*M+i][1]].z);
-                glVertex3f(pS[fS[j*M+i][2]].x, pS[fS[j*M+i][2]].y, pS[fS[j*M+i][2]].z);
-                glVertex3f(pS[fS[j*M+i][3]].x, pS[fS[j*M+i][3]].y, pS[fS[j*M+i][3]].z);
-            glEnd();
-        }
-    }
-}
+
 /*Ces deux fonctions servent à générer et à afficher l'abdomen de la fourmi
 Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
 */
 void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
-    float longueur=2;
+    float longueur=3;
     Point pA[T*F];
     int fA[(T-1)*F][4];
     for(int j=0; j<T; j++){
         for(int i=0; i<F; i++){
-            pA[j*T+i]={cos(2*i*M_PI/(F+0.0)), sin(2*i*M_PI/(F+0.0)), longueur*0.8*abs(cos(j*M_PI/(T+0.0)*pow(x, 1/6)))};
+            pA[j*T+i]={0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*cos(2*i*M_PI/(F+0.0)), 0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*sin(2*i*M_PI/(F+0.0)), j*longueur/(F+0.0)};
         }
     }
     for(int j=0; j<T-1; j++){
@@ -197,6 +166,10 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
             glEnd();
         }
     }
+    glPushMatrix();
+    glTranslatef(0, 0, -1/2);
+    glutSolidSphere(0.8, 30, 30);
+    glPopMatrix();
 }
 
 void clavier(unsigned char touche,int x,int y)

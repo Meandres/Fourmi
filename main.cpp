@@ -24,7 +24,7 @@ class Point{
 char presse;
 int anglex=30,angley=20,x,y,xold,yold, angRotTerreSol=0, angRotTerreMM=0, angRotLuneTerre=0;
 int im_larg, im_haut;
-
+float diametre_pate=0.1, longueur_pate=2, diametre_corps=1, longueur_abdomen=2;
 
 void affichage();
 void clavier(unsigned char touche,int x,int y);
@@ -34,6 +34,8 @@ void redim(int l,int h);
 void loadJpegImage(char *fichier, unsigned char* image);
 void affiche_abdomen(int T, int F, float r, float g, float b); //pour afficher un abdomen de la couleur dont les composants sont spécifiés en argument
 void affiche_abdomen(int T, int F, int indiceTex); //pour afficher un abdomen en utilisant la texture d'indice spécifié en parametre dans la liste des textures chargées
+void affiche_pate();
+void affiche_corps();
 void idle();
 
 int main(int argc,char **argv)
@@ -54,7 +56,7 @@ int main(int argc,char **argv)
   /* Mise en place de la projection perspective */
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(20.0,1,1.0,20.0);
+  gluPerspective(60.0,1,1.0,50.0);
   glMatrixMode(GL_MODELVIEW);
 
   /* Parametrage du placage de textures */
@@ -96,14 +98,39 @@ void affichage()
 
   glLoadIdentity();
 
-  gluLookAt(10.0,10.0,10.0,  0.0,0.0,0.0,  0.0,0.0,1.0);
+  gluLookAt(15.0,15.0,15.0,  0.0,0.0,0.0,  0.0,0.0,1.0);
   glRotatef(angley,1.0,0.0,0.0);
   glRotatef(anglex,0.0,1.0,0.0);
+    glColor3f(1, 1, 1);
 
-  affiche_abdomen(20, 20, 1.0, 1.0, 1.0);
+    glPushMatrix();
+    affiche_corps();
 
+    glPushMatrix();
+    glColor3f(1.0f, 0.0f, 1.0f);//magenta
+    glTranslatef(3*diametre_corps/4, 3*diametre_corps/4, 0);
+    glRotatef(35, 0, 1, 0);
+    glRotatef(35, 0, 0, 1);
+    affiche_pate();
+    glPopMatrix();
 
-  /*
+    glPushMatrix();
+    glColor3f(0.5f, 1.0f, 1.0f); //cyan
+    glTranslatef(0, 3*diametre_corps/4, 0);
+    glRotatef(35, 0, 0, 1);
+    affiche_pate();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
+    glTranslatef(3*diametre_corps/4, -3*diametre_corps/4, 0);
+    glRotatef(35, 0, 0, 1);
+    glRotatef(-35, 0, 1, 0);
+    affiche_pate();
+    glPopMatrix();
+
+    glPopMatrix();
+
   //Repère
     //axe x en rouge
     glBegin(GL_LINES);
@@ -122,7 +149,7 @@ void affichage()
     	glColor3f(0.0,0.0,1.0);
     	glVertex3f(0, 0,0.0);
     	glVertex3f(0, 0,10.0);
-    glEnd();*/
+    glEnd();
 
   glutSwapBuffers();
 
@@ -134,17 +161,29 @@ void idle(){
     angRotLuneTerre+=12*pas;
     glutPostRedisplay();
 }
-
+void affiche_corps(){
+    glPushMatrix();
+    glScalef(1.25, 1.5, 1);
+    glutSolidSphere(diametre_corps, 20, 20);
+    glPopMatrix();
+}
+void affiche_pate(){
+    glPushMatrix();
+    glutSolidCylinder(diametre_pate, longueur_pate, 20, 20);
+    glTranslatef(0, 0, longueur_pate);
+    glRotatef(120, 0, 1, 0);
+    glutSolidCylinder(diametre_pate, 1.5*longueur_pate, 20, 20);
+    glPopMatrix();
+}
 /*Ces deux fonctions servent à générer et à afficher l'abdomen de la fourmi
 Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
 */
 void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
-    float longueur=3;
     Point pA[T*F];
     int fA[(T-1)*F][4];
     for(int j=0; j<T; j++){
         for(int i=0; i<F; i++){
-            pA[j*T+i]={0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*cos(2*i*M_PI/(F+0.0)), 0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*sin(2*i*M_PI/(F+0.0)), j*longueur/(F+0.0)};
+            pA[j*T+i]={0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*cos(2*i*M_PI/(F+0.0)), 0.8*abs(cos(j*M_PI/(2*T+0.0)*pow(x, 1/6)))*sin(2*i*M_PI/(F+0.0)), j*longueur_abdomen/(F+0.0)};
         }
     }
     for(int j=0; j<T-1; j++){

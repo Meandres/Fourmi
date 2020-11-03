@@ -106,27 +106,64 @@ void affichage()
     glPushMatrix();
     affiche_corps();
 
-    glPushMatrix();
+    glPushMatrix(); //gauche en regardant par le dessus
     glColor3f(1.0f, 0.0f, 1.0f);//magenta
-    glTranslatef(3*diametre_corps/4, 3*diametre_corps/4, 0);
+    glTranslatef(3*diametre_corps/4, diametre_corps, 0);
     glRotatef(35, 0, 1, 0);
     glRotatef(35, 0, 0, 1);
     affiche_pate();
     glPopMatrix();
 
-    glPushMatrix();
+    glPushMatrix();//droite
+    glColor3f(1.0f, 0.0f, 1.0f);//magenta
+    glTranslatef(-3*diametre_corps/4, diametre_corps, 0);
+    glRotatef(-35, 0, 1, 0);
+    glRotatef(180-35, 0, 0, 1);
+    affiche_pate();
+    glPopMatrix();
+
+    glPushMatrix();//gauche
     glColor3f(0.5f, 1.0f, 1.0f); //cyan
-    glTranslatef(0, 3*diametre_corps/4, 0);
-    glRotatef(35, 0, 0, 1);
+    glTranslatef(3*diametre_corps/4, 0, 0);
+    glRotatef(35, 0, 1, 0);
+    affiche_pate();
+    glPopMatrix();
+
+    glPushMatrix();//droite
+    glColor3f(0.5f, 1.0f, 1.0f); //cyan
+    glTranslatef(-3*diametre_corps/4, 0, 0);
+    glRotatef(180, 0, 0, 1);
+    glRotatef(35, 0, 1, 0);
+    affiche_pate();
+    glPopMatrix();
+
+    glPushMatrix();//gauche
+    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
+    glTranslatef(3*diametre_corps/4, -diametre_corps, 0);
+    glRotatef(35, 0, 1, 0);
+    glRotatef(-35, 0, 0, 1);
+    affiche_pate();
+    glPopMatrix();
+
+    glPushMatrix();//droite
+    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
+    glTranslatef(-3*diametre_corps/4, -diametre_corps, 0);
+    glRotatef(-35, 0, 1, 0);
+    glRotatef(180+35, 0, 0, 1);
     affiche_pate();
     glPopMatrix();
 
     glPushMatrix();
-    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
-    glTranslatef(3*diametre_corps/4, -3*diametre_corps/4, 0);
-    glRotatef(35, 0, 0, 1);
-    glRotatef(-35, 0, 1, 0);
-    affiche_pate();
+    glTranslatef(0, -3*diametre_corps/2, 0);
+    glRotatef(90, 1, 0, 0);
+    affiche_abdomen(30, 30, 1.0, 1.0, 1.0);
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.5, 0, 0);
+    glTranslatef(0, 3*diametre_corps/2, diametre_corps/3);
+    glScalef(1, 1.5, 1);
+    glutSolidSphere(0.7, 30, 30);
     glPopMatrix();
 
     glPopMatrix();
@@ -176,7 +213,7 @@ void affiche_pate(){
     glPopMatrix();
 }
 /*Ces deux fonctions servent à générer et à afficher l'abdomen de la fourmi
-Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
+Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)| entre 0 et PI/2
 */
 void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
     Point pA[T*F];

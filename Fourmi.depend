@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1604397009 source:/home/ilya/Documents/L3/SI/Fourmi/main.cpp
+1603366045 source:/home/ilya/Documents/L3/SI/Fourmi/main.cpp
 	<cstdio>
 	<cstdlib>
 	<GL/freeglut.h>
@@ -8,6 +8,14 @@
 	<cmath>
 
 1603207819 source:/home/ilya/Documents/SI/Fourmi/main.cpp
+	<cstdio>
+	<cstdlib>
+	<GL/freeglut.h>
+	<jpeglib.h>
+	<jerror.h>
+	<cmath>
+
+1604573266 source:/home/benner/Documents/CodeBlocks/Fourmi-main/main.cpp
 	<cstdio>
 	<cstdlib>
 	<GL/freeglut.h>

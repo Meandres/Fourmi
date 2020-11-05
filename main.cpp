@@ -22,9 +22,17 @@ class Point{
 };
 
 char presse;
-int anglex=30,angley=20,x,y,xold,yold, angRotTerreSol=0, angRotTerreMM=0, angRotLuneTerre=0;
+int anglex=-90,angley=90,x,y,xold,yold;
 int im_larg, im_haut;
-float diametre_pate=0.1, longueur_pate=2, diametre_corps=1, longueur_abdomen=2;
+// permet la rotation de la camera
+float rot_x = 0, rot_y = 0, rot_z = 0;
+// permet le zoom de la camera
+float vue = 0;
+// toutes les valeurs des formes crees
+float diametre_pate = 0.05, longueur_pate = 1.5, diametre_corps = 0.7, longueur_abdomen = 3, rot_patte = 0;
+float diametre_tete = 1, longueur_mandibule = 0.6, rot_mandibule = 0;
+bool inverse_rot_patte = false, inverse_rot_mandibule = false;
+float diametre_antenne = 0.04, longueur_antenne = 1;
 
 void affichage();
 void clavier(unsigned char touche,int x,int y);
@@ -34,9 +42,15 @@ void redim(int l,int h);
 void loadJpegImage(char *fichier, unsigned char* image);
 void affiche_abdomen(int T, int F, float r, float g, float b); //pour afficher un abdomen de la couleur dont les composants sont spécifiés en argument
 void affiche_abdomen(int T, int F, int indiceTex); //pour afficher un abdomen en utilisant la texture d'indice spécifié en parametre dans la liste des textures chargées
-void affiche_pate();
+void affiche_patte();
+void affiche_ensemble_pattes();
 void affiche_corps();
+void affiche_tete();
 void idle();
+void lumieres();
+void idle_mandibules();
+void idle_deplacement();
+void directions(int touche, int x , int y);
 
 int main(int argc,char **argv)
 
@@ -83,7 +97,8 @@ int main(int argc,char **argv)
   glutMouseFunc(souris);
   glutMotionFunc(sourismouv);
   glutReshapeFunc(redim);
-  glutIdleFunc(idle);
+  glutIdleFunc(idle_mandibules);
+  glutSpecialFunc(directions);
 
   /* Entr�e dans la boucle principale glut */
   glutMainLoop();
@@ -95,75 +110,44 @@ int main(int argc,char **argv)
 void affichage()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+  /*glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  glOrtho(-5+vue,5-vue,-5+vue, 5-vue, -20, 20);
+  gluLookAt(5.0, 5.0, 5.0, 0, 0, 0, 0.0, 1.0, 0.0);*/
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(-10+vue,10-vue,-10+vue, 10-vue, -50, 50);
+  gluLookAt(0.0, 0.0, 0.0, sin(rot_x), tan(rot_y)*2, -cos(rot_x), 0.0, 1.0, 0.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glRotatef(angley, 0.0, 0.0, 1.0);
+  glRotatef(anglex, 1.0, 0.0, 0.0);
 
-  gluLookAt(15.0,15.0,15.0,  0.0,0.0,0.0,  0.0,0.0,1.0);
-  glRotatef(angley,1.0,0.0,0.0);
-  glRotatef(anglex,0.0,1.0,0.0);
+
     glColor3f(1, 1, 1);
 
     glPushMatrix();
+    //corps
     affiche_corps();
-
-    glPushMatrix(); //gauche en regardant par le dessus
-    glColor3f(1.0f, 0.0f, 1.0f);//magenta
-    glTranslatef(3*diametre_corps/4, diametre_corps, 0);
-    glRotatef(35, 0, 1, 0);
-    glRotatef(35, 0, 0, 1);
-    affiche_pate();
-    glPopMatrix();
-
-    glPushMatrix();//droite
-    glColor3f(1.0f, 0.0f, 1.0f);//magenta
-    glTranslatef(-3*diametre_corps/4, diametre_corps, 0);
-    glRotatef(-35, 0, 1, 0);
-    glRotatef(180-35, 0, 0, 1);
-    affiche_pate();
-    glPopMatrix();
-
-    glPushMatrix();//gauche
-    glColor3f(0.5f, 1.0f, 1.0f); //cyan
-    glTranslatef(3*diametre_corps/4, 0, 0);
-    glRotatef(35, 0, 1, 0);
-    affiche_pate();
-    glPopMatrix();
-
-    glPushMatrix();//droite
-    glColor3f(0.5f, 1.0f, 1.0f); //cyan
-    glTranslatef(-3*diametre_corps/4, 0, 0);
-    glRotatef(180, 0, 0, 1);
-    glRotatef(35, 0, 1, 0);
-    affiche_pate();
-    glPopMatrix();
-
-    glPushMatrix();//gauche
-    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
-    glTranslatef(3*diametre_corps/4, -diametre_corps, 0);
-    glRotatef(35, 0, 1, 0);
-    glRotatef(-35, 0, 0, 1);
-    affiche_pate();
-    glPopMatrix();
-
-    glPushMatrix();//droite
-    glColor4f(1.0f, 1.0f, 0.0f, 0.0f); //jaune
-    glTranslatef(-3*diametre_corps/4, -diametre_corps, 0);
-    glRotatef(-35, 0, 1, 0);
-    glRotatef(180+35, 0, 0, 1);
-    affiche_pate();
-    glPopMatrix();
-
     glPushMatrix();
-    glTranslatef(0, -3*diametre_corps/2, 0);
-    glRotatef(90, 1, 0, 0);
-    affiche_abdomen(30, 30, 1.0, 1.0, 1.0);
+    glTranslatef(0,0,diametre_corps*1.5);
+    affiche_abdomen(20, 20, 0.5, 1, 1);
     glPopMatrix();
 
+    //pattes
+    affiche_ensemble_pattes();
+
+    //cou
     glPushMatrix();
-    glColor3f(0.5, 0, 0);
-    glTranslatef(0, 3*diametre_corps/2, diametre_corps/3);
-    glScalef(1, 1.5, 1);
-    glutSolidSphere(0.7, 30, 30);
+    glColor3f(0.4f, 0.4f, 0.4f); //gris
+    glTranslatef(0, 0, (-diametre_corps)*1.3);
+    glutSolidSphere(diametre_tete/2, 10, 10);
+    glPopMatrix();
+
+    //Tete
+    glPushMatrix();
+    glTranslatef(diametre_tete/2, 0, (-diametre_corps)*2.5);
+    affiche_tete();
     glPopMatrix();
 
     glPopMatrix();
@@ -172,48 +156,160 @@ void affichage()
     //axe x en rouge
     glBegin(GL_LINES);
         glColor3f(1.0,0.0,0.0);
-    	glVertex3f(0, 0,0.0);
-    	glVertex3f(10, 0,0.0);
+    	glVertex3f(0, 0, 0);
+    	glVertex3f(10, 0, 0);
     glEnd();
     //axe des y en vert
     glBegin(GL_LINES);
     	glColor3f(0.0,1.0,0.0);
-    	glVertex3f(0, 0,0.0);
-    	glVertex3f(0, 10,0.0);
+    	glVertex3f(0, 0, 0);
+    	glVertex3f(0, 10, 0);
     glEnd();
     //axe des z en bleu
     glBegin(GL_LINES);
     	glColor3f(0.0,0.0,1.0);
-    	glVertex3f(0, 0,0.0);
-    	glVertex3f(0, 0,10.0);
+    	glVertex3f(0, 0, 0);
+    	glVertex3f(0, 0, 10);
     glEnd();
 
+    lumieres();
   glutSwapBuffers();
 
 }
-void idle(){
-    int pas=5;
-    angRotTerreSol+=pas;
-    angRotTerreMM+=pas;
-    angRotLuneTerre+=12*pas;
-    glutPostRedisplay();
-}
+
+/*Le corps principal de la fourmi*/
 void affiche_corps(){
     glPushMatrix();
     glScalef(1.25, 1.5, 1);
     glutSolidSphere(diametre_corps, 20, 20);
     glPopMatrix();
 }
-void affiche_pate(){
+
+/*Une patte de la fourmi*/
+void affiche_patte(){
     glPushMatrix();
     glutSolidCylinder(diametre_pate, longueur_pate, 20, 20);
     glTranslatef(0, 0, longueur_pate);
-    glRotatef(120, 0, 1, 0);
+    glRotatef(-100, 0, 1, 0);
     glutSolidCylinder(diametre_pate, 1.5*longueur_pate, 20, 20);
+    glTranslatef(0, 0, 1.5*longueur_pate);
+    glRotatef(100, 0, 1, 0);
+    glutSolidCylinder(diametre_pate, longueur_pate/6
+    , 20, 20);
     glPopMatrix();
 }
+
+/*Toutes les pates de la fourmi*/
+void affiche_ensemble_pattes(){
+    glPushMatrix();
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, diametre_corps/3);
+    glRotatef(30+rot_patte, 1, 0, 0);
+    glRotatef(rot_patte, 0, 1, 0);
+    affiche_patte();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, 0);
+    glRotatef(90-rot_patte, 1, 0, 0);
+    affiche_patte();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, -diametre_corps/3);
+    glRotatef(120+rot_patte, 1, 0, 0);
+    glRotatef(rot_patte, 0, 1, 0);
+    glRotatef(rot_patte, 0, 0, 1);
+    affiche_patte();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, diametre_corps/3);
+    glRotatef(-30-rot_patte, 1, 0, 0);
+    glRotatef(rot_patte, 0, 1, 0);
+    affiche_patte();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, 0);
+    glRotatef(-90+rot_patte, 1, 0, 0);
+    affiche_patte();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, -diametre_corps/3);
+    glRotatef(-120-rot_patte, 1, 0, 0);
+    glRotatef(rot_patte, 0, 1, 0);
+    affiche_patte();
+    glPopMatrix();
+}
+
+/*La tête de la fourmi*/
+void affiche_tete(){
+    glPushMatrix();
+    glutSolidSphere(diametre_tete, 6, 6);
+
+    glColor3f(0.2f, 0.2f, 0.2f); //gris sombre
+    //Les yeux
+    glPushMatrix();
+    glTranslatef(diametre_tete/1.8, - diametre_tete/2, - diametre_corps/3);
+    glutSolidSphere(diametre_tete/3, 5, 10);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(diametre_tete/1.8, diametre_tete/2, - diametre_corps/3);
+    glutSolidSphere(diametre_tete/3, 5, 10);
+    glPopMatrix();
+
+    glColor3f(0.6f, 0.3f, 0.0f); //orange
+    //Les mandibules
+    glPushMatrix();
+    glTranslatef(0, - diametre_tete/2.5, - diametre_corps - diametre_tete/4);
+    glRotatef(210 - rot_mandibule/2, 0, 1, 0);
+    glRotatef(-40 + rot_mandibule, 1, 0, 0);
+    glutSolidSphere(diametre_tete/5, 10, 10);
+    glutSolidCone(diametre_tete/6, longueur_mandibule, 10, 10);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, diametre_tete/2.5, - diametre_corps - diametre_tete/4);
+    glRotatef(210 - rot_mandibule/2, 0, 1, 0);
+    glRotatef(40 - rot_mandibule, 1, 0, 0);
+    glutSolidSphere(diametre_tete/5, 10, 10);
+    glutSolidCone(diametre_tete/6, longueur_mandibule, 10, 10);
+    glPopMatrix();
+
+    //Les antennes
+    glPushMatrix();
+    glTranslatef(longueur_antenne/4, diametre_tete/2, - diametre_corps/1.2);
+    glRotatef(190, 1, 0, 0);
+    glRotatef(50, 0, 1, 0);
+    glutSolidCylinder(diametre_antenne, longueur_antenne, 10, 10);
+    glTranslatef(0, 0, longueur_antenne);
+    glRotatef(-60, 0, 1, 0);
+    glutSolidCylinder(diametre_antenne, 1.3*longueur_antenne, 10, 10);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(longueur_antenne/4, -diametre_tete/2, - diametre_corps/1.2);
+    glRotatef(170, 1, 0, 0);
+    glRotatef(50, 0, 1, 0);
+    glutSolidCylinder(diametre_antenne, longueur_antenne, 10, 10);
+    glTranslatef(0, 0, longueur_antenne);
+    glRotatef(-60, 0, 1, 0);
+    glutSolidCylinder(diametre_antenne, 1.3*longueur_antenne, 10, 10);
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
 /*Ces deux fonctions servent à générer et à afficher l'abdomen de la fourmi
-Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)| entre 0 et PI/2
+Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
 */
 void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
     Point pA[T*F];
@@ -248,6 +344,52 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
     glPopMatrix();
 }
 
+/*Utilisation d'une lumière diffuse*/
+void lumieres()
+{
+    glEnable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+
+    GLfloat diffuse_lum[] = {1.0, 1.0, 1.0};
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuse_lum);
+
+    GLfloat coordonnees_lum [] = {0.0, 5.0, -8.0};
+    glLightfv(GL_LIGHT1,GL_POSITION,coordonnees_lum);
+
+}
+
+/*Animation activable des pates*/
+void idle_deplacement()
+{
+    if (inverse_rot_patte)
+        rot_patte -= 1.0;
+    else
+        rot_patte += 1.0;
+
+    if (rot_patte > 20 && !inverse_rot_patte)
+        inverse_rot_patte = true;
+    else if (rot_patte < 0 && inverse_rot_patte)
+        inverse_rot_patte = false;
+    glutPostRedisplay();
+}
+
+/*Animation automatique des mandibules*/
+void idle_mandibules()
+{
+    if (inverse_rot_mandibule)
+        rot_mandibule -= 2.0;
+    else
+        rot_mandibule += 2.0;
+
+    if (rot_mandibule > 40 && !inverse_rot_mandibule)
+        inverse_rot_mandibule = true;
+    else if (rot_mandibule < 0 && inverse_rot_mandibule)
+        inverse_rot_mandibule = false;
+    glutPostRedisplay();
+}
+
 void clavier(unsigned char touche,int x,int y)
 {
   switch(touche) {
@@ -260,13 +402,33 @@ void clavier(unsigned char touche,int x,int y)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glutPostRedisplay();
-  break;
-
-  case 27: /* touche ESC */
+  case 'Z' : vue += 1;
+    glutPostRedisplay();
+    break; /*zoom arrière*/
+  case 'z' : vue -= 1;
+    glutPostRedisplay();
+    break;  /*zoom avant*/
+  case 32 : /*touche Espace */ idle_deplacement();
+    break;
+  case 27 : /* touche ESC */
     exit(0);
   default:
 	  break;
   }
+}
+
+void directions(int touche, int x , int y)
+{
+	switch (touche) {
+		case GLUT_KEY_UP : rot_y += 0.25;
+			break;
+		case GLUT_KEY_DOWN : rot_y -= 0.25;
+			break;
+		case GLUT_KEY_LEFT : rot_x -= 0.25;
+			break;
+		case GLUT_KEY_RIGHT : rot_x += 0.25;
+			break;
+	}
 }
 
 void souris(int bouton, int etat,int x,int y)

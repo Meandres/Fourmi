@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1603366045 source:/home/ilya/Documents/L3/SI/Fourmi/main.cpp
+1604680613 source:/home/ilya/Documents/L3/SI/Fourmi/main.cpp
 	<cstdio>
 	<cstdlib>
 	<GL/freeglut.h>

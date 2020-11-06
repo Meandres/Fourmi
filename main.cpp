@@ -33,6 +33,8 @@ float diametre_pate = 0.05, longueur_pate = 1.5, diametre_corps = 0.7, longueur_
 float diametre_tete = 1, longueur_mandibule = 0.6, rot_mandibule = 0;
 bool inverse_rot_patte = false, inverse_rot_mandibule = false;
 float diametre_antenne = 0.04, longueur_antenne = 1;
+GLuint texIds[3];
+static GLubyte checkImage0[256][256][4];
 
 void affichage();
 void clavier(unsigned char touche,int x,int y);
@@ -49,8 +51,9 @@ void affiche_tete();
 void idle();
 void lumieres();
 void idle_mandibules();
-void idle_deplacement();
+void anim_deplacement();
 void directions(int touche, int x , int y);
+void makeCheckImage(void);
 
 int main(int argc,char **argv)
 
@@ -73,23 +76,23 @@ int main(int argc,char **argv)
   gluPerspective(60.0,1,1.0,50.0);
   glMatrixMode(GL_MODELVIEW);
 
-  /* Parametrage du placage de textures */
-  /*glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-  unsigned int texIds[3];
+  unsigned char *imAbdo;// *imAbdo2, *shrek;
+  loadJpegImage("./texture.jpg", imAbdo);
+  //loadJpegImage("./abdomen2.jpg", imAbdo2);
+  //loadJpegImage("./shrek.jpg", shrek);
+  makeCheckImage();
   glGenTextures(3, texIds);
+
+  /* Parametrage du placage de textures */
+
   glBindTexture(GL_TEXTURE_2D, texIds[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, imLune);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage0);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
-  glBindTexture(GL_TEXTURE_2D, texIds[1]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, imSoleil);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-  glBindTexture(GL_TEXTURE_2D, texIds[2]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2048, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, imTerre);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-  glEnable(GL_TEXTURE_2D);*/
+  glEnable(GL_TEXTURE_2D);
 
   /* Mise en place des fonctions de rappel */
   glutDisplayFunc(affichage);
@@ -100,12 +103,21 @@ int main(int argc,char **argv)
   glutIdleFunc(idle_mandibules);
   glutSpecialFunc(directions);
 
-  /* Entr�e dans la boucle principale glut */
+  /* Entree dans la boucle principale glut */
   glutMainLoop();
   return 0;
 }
 
-
+void makeCheckImage(void)
+{
+    GLubyte c;
+    for(int i=0; i<256; i++)
+        for(int j=0; j<256; j++){
+            c = ((((i&0x20)==0)^((j&0x20))==0))*255;
+            checkImage0[i][j][0] = checkImage0[i][j][1] = checkImage0[i][j][2] = c;
+            checkImage0[i][j][3] = 255;
+            }
+}
 
 void affichage()
 {
@@ -123,7 +135,19 @@ void affichage()
   glRotatef(angley, 0.0, 0.0, 1.0);
   glRotatef(anglex, 1.0, 0.0, 0.0);
 
+    glBindTexture(GL_TEXTURE_2D, texIds[0]);
+    glBegin (GL_QUADS);
+    glTexCoord2f (0.0, 0.0);
+    glVertex3f (0.0, 0.0, 0.0);
+    glTexCoord2f (1.0, 0.0);
+    glVertex3f (10.0, 0.0, 0.0);
+    glTexCoord2f (1.0, 1.0);
+    glVertex3f (10.0, 10.0, 0.0);
+    glTexCoord2f (0.0, 1.0);
+    glVertex3f (0.0, 10.0, 0.0);
+    glEnd ();
 
+/*
     glColor3f(1, 1, 1);
 
     glPushMatrix();
@@ -171,6 +195,7 @@ void affichage()
     	glVertex3f(0, 0, 0);
     	glVertex3f(0, 0, 10);
     glEnd();
+*/
 
     lumieres();
   glutSwapBuffers();
@@ -181,6 +206,7 @@ void affichage()
 void affiche_corps(){
     glPushMatrix();
     glScalef(1.25, 1.5, 1);
+    glBindTexture(GL_TEXTURE_2D, texIds[0]);
     glutSolidSphere(diametre_corps, 20, 20);
     glPopMatrix();
 }
@@ -361,7 +387,7 @@ void lumieres()
 }
 
 /*Animation activable des pates*/
-void idle_deplacement()
+void anim_deplacement()
 {
     if (inverse_rot_patte)
         rot_patte -= 1.0;
@@ -408,7 +434,7 @@ void clavier(unsigned char touche,int x,int y)
   case 'z' : vue -= 1;
     glutPostRedisplay();
     break;  /*zoom avant*/
-  case 32 : /*touche Espace */ idle_deplacement();
+  case 32 : /*touche Espace */ anim_deplacement();
     break;
   case 27 : /* touche ESC */
     exit(0);

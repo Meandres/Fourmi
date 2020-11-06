@@ -31,10 +31,9 @@ float vue = 0;
 // toutes les valeurs des formes crees
 float diametre_pate = 0.05, longueur_pate = 1.5, diametre_corps = 0.7, longueur_abdomen = 3, rot_patte = 0;
 float diametre_tete = 1, longueur_mandibule = 0.6, rot_mandibule = 0;
-bool inverse_rot_patte = false, inverse_rot_mandibule = false;
+bool inverse_rot_patte = false, inverse_rot_mandibule = false, anim_pates=false;
 float diametre_antenne = 0.04, longueur_antenne = 1;
 GLuint texIds[3];
-static GLubyte checkImage0[256][256][4];
 
 void affichage();
 void clavier(unsigned char touche,int x,int y);
@@ -50,7 +49,7 @@ void affiche_corps();
 void affiche_tete();
 void idle();
 void lumieres();
-void idle_mandibules();
+void idle_anim();
 void anim_deplacement();
 void directions(int touche, int x , int y);
 void makeCheckImage(void);
@@ -76,15 +75,12 @@ int main(int argc,char **argv)
   gluPerspective(60.0,1,1.0,50.0);
   glMatrixMode(GL_MODELVIEW);
 
-  unsigned char *imAbdo;// *imAbdo2, *shrek;
+  unsigned char *imAbdo;
   loadJpegImage("./texture.jpg", imAbdo);
-  //loadJpegImage("./abdomen2.jpg", imAbdo2);
-  //loadJpegImage("./shrek.jpg", shrek);
-  makeCheckImage();
-  glGenTextures(3, texIds);
+  //glGenTextures(3, texIds);
 
   /* Parametrage du placage de textures */
-
+/*
   glBindTexture(GL_TEXTURE_2D, texIds[0]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage0);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -93,30 +89,19 @@ int main(int argc,char **argv)
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
   glEnable(GL_TEXTURE_2D);
-
+*/
   /* Mise en place des fonctions de rappel */
   glutDisplayFunc(affichage);
   glutKeyboardFunc(clavier);
   glutMouseFunc(souris);
   glutMotionFunc(sourismouv);
   glutReshapeFunc(redim);
-  glutIdleFunc(idle_mandibules);
+  glutIdleFunc(idle_anim);
   glutSpecialFunc(directions);
 
   /* Entree dans la boucle principale glut */
   glutMainLoop();
   return 0;
-}
-
-void makeCheckImage(void)
-{
-    GLubyte c;
-    for(int i=0; i<256; i++)
-        for(int j=0; j<256; j++){
-            c = ((((i&0x20)==0)^((j&0x20))==0))*255;
-            checkImage0[i][j][0] = checkImage0[i][j][1] = checkImage0[i][j][2] = c;
-            checkImage0[i][j][3] = 255;
-            }
 }
 
 void affichage()
@@ -135,7 +120,7 @@ void affichage()
   glRotatef(angley, 0.0, 0.0, 1.0);
   glRotatef(anglex, 1.0, 0.0, 0.0);
 
-    glBindTexture(GL_TEXTURE_2D, texIds[0]);
+    /*glBindTexture(GL_TEXTURE_2D, texIds[0]);
     glBegin (GL_QUADS);
     glTexCoord2f (0.0, 0.0);
     glVertex3f (0.0, 0.0, 0.0);
@@ -145,9 +130,9 @@ void affichage()
     glVertex3f (10.0, 10.0, 0.0);
     glTexCoord2f (0.0, 1.0);
     glVertex3f (0.0, 10.0, 0.0);
-    glEnd ();
+    glEnd ();*/
 
-/*
+
     glColor3f(1, 1, 1);
 
     glPushMatrix();
@@ -175,7 +160,7 @@ void affichage()
     glPopMatrix();
 
     glPopMatrix();
-
+/*
   //Repère
     //axe x en rouge
     glBegin(GL_LINES);
@@ -195,8 +180,8 @@ void affichage()
     	glVertex3f(0, 0, 0);
     	glVertex3f(0, 0, 10);
     glEnd();
-*/
 
+*/
     lumieres();
   glutSwapBuffers();
 
@@ -398,11 +383,11 @@ void anim_deplacement()
         inverse_rot_patte = true;
     else if (rot_patte < 0 && inverse_rot_patte)
         inverse_rot_patte = false;
-    glutPostRedisplay();
+    //glutPostRedisplay();
 }
 
 /*Animation automatique des mandibules*/
-void idle_mandibules()
+void idle_anim()
 {
     if (inverse_rot_mandibule)
         rot_mandibule -= 2.0;
@@ -413,6 +398,9 @@ void idle_mandibules()
         inverse_rot_mandibule = true;
     else if (rot_mandibule < 0 && inverse_rot_mandibule)
         inverse_rot_mandibule = false;
+    if(anim_pates){
+        anim_deplacement();
+    }
     glutPostRedisplay();
 }
 
@@ -434,7 +422,11 @@ void clavier(unsigned char touche,int x,int y)
   case 'z' : vue -= 1;
     glutPostRedisplay();
     break;  /*zoom avant*/
-  case 32 : /*touche Espace */ anim_deplacement();
+  case 32 : /*touche Espace */
+      if(!anim_pates)
+            anim_pates=true;
+      else
+            anim_pates=false;
     break;
   case 27 : /* touche ESC */
     exit(0);

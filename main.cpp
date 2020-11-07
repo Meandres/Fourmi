@@ -22,6 +22,7 @@ class Point{
 };
 
 char presse;
+unsigned char image[1024*1024*3];
 int anglex=-90,angley=90,x,y,xold,yold;
 int im_larg, im_haut;
 // permet la rotation de la camera
@@ -33,14 +34,14 @@ float diametre_pate = 0.05, longueur_pate = 1.5, diametre_corps = 0.7, longueur_
 float diametre_tete = 1, longueur_mandibule = 0.6, rot_mandibule = 0;
 bool inverse_rot_patte = false, inverse_rot_mandibule = false, anim_pates=false;
 float diametre_antenne = 0.04, longueur_antenne = 1;
-GLuint texIds[3];
+GLuint texture;
 
 void affichage();
 void clavier(unsigned char touche,int x,int y);
 void souris(int boutton, int etat,int x,int y);
 void sourismouv(int x,int y);
 void redim(int l,int h);
-void loadJpegImage(char *fichier, unsigned char* image);
+void loadJpegImage(char *fichier);
 void affiche_abdomen(int T, int F, float r, float g, float b); //pour afficher un abdomen de la couleur dont les composants sont spécifiés en argument
 void affiche_abdomen(int T, int F, int indiceTex); //pour afficher un abdomen en utilisant la texture d'indice spécifié en parametre dans la liste des textures chargées
 void affiche_patte();
@@ -52,7 +53,6 @@ void lumieres();
 void idle_anim();
 void anim_deplacement();
 void directions(int touche, int x , int y);
-void makeCheckImage(void);
 
 int main(int argc,char **argv)
 
@@ -75,21 +75,15 @@ int main(int argc,char **argv)
   gluPerspective(60.0,1,1.0,50.0);
   glMatrixMode(GL_MODELVIEW);
 
-  unsigned char *imAbdo;
-  loadJpegImage("./texture.jpg", imAbdo);
-  //glGenTextures(3, texIds);
-
   /* Parametrage du placage de textures */
-/*
-  glBindTexture(GL_TEXTURE_2D, texIds[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage0);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
+  loadJpegImage("./abdomen.jpg");
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
   glEnable(GL_TEXTURE_2D);
-*/
+
   /* Mise en place des fonctions de rappel */
   glutDisplayFunc(affichage);
   glutKeyboardFunc(clavier);
@@ -120,19 +114,9 @@ void affichage()
   glRotatef(angley, 0.0, 0.0, 1.0);
   glRotatef(anglex, 1.0, 0.0, 0.0);
 
-    /*glBindTexture(GL_TEXTURE_2D, texIds[0]);
-    glBegin (GL_QUADS);
-    glTexCoord2f (0.0, 0.0);
-    glVertex3f (0.0, 0.0, 0.0);
-    glTexCoord2f (1.0, 0.0);
-    glVertex3f (10.0, 0.0, 0.0);
-    glTexCoord2f (1.0, 1.0);
-    glVertex3f (10.0, 10.0, 0.0);
-    glTexCoord2f (0.0, 1.0);
-    glVertex3f (0.0, 10.0, 0.0);
-    glEnd ();*/
+    //glBegin(GL_QUADS) ;glTexCoord2f(0,0) ;glVertex2f(0,0) ;glTexCoord2f(1,0) ;glVertex2f(1,0) ;glTexCoord2f(1,1) ;glVertex2f(1,1) ;glTexCoord2f(0,1) ;glVertex2f(0,1) ;glEnd() ;
 
-
+    glDisable(GL_TEXTURE_2D);
     glColor3f(1, 1, 1);
 
     glPushMatrix();
@@ -144,7 +128,9 @@ void affichage()
     glPopMatrix();
 
     //pattes
+    glEnable(GL_TEXTURE_2D);
     affiche_ensemble_pattes();
+    glDisable(GL_TEXTURE_2D);
 
     //cou
     glPushMatrix();
@@ -191,7 +177,6 @@ void affichage()
 void affiche_corps(){
     glPushMatrix();
     glScalef(1.25, 1.5, 1);
-    glBindTexture(GL_TEXTURE_2D, texIds[0]);
     glutSolidSphere(diametre_corps, 20, 20);
     glPopMatrix();
 }
@@ -319,8 +304,8 @@ void affiche_tete(){
     glPopMatrix();
 }
 
-/*Ces deux fonctions servent à générer et à afficher l'abdomen de la fourmi
-Elles créent une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
+/*Cette fonction sert à générer et à afficher l'abdomen de la fourmi
+Elle crée une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
 */
 void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
     Point pA[T*F];
@@ -338,13 +323,18 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
             fA[j*T+i][3]=i+(j+1)*T;
         }
     }
+    glEnable(GL_TEXTURE_2D);
     for(int j=0; j<T-1; j++){
         for(int i=0; i<F; i++){
             glBegin(GL_QUADS);
-                glColor3f(r, g, b);
+                //glColor3f(r, g, b);
+                glTexCoord2f(i/(F+0.0), j/(T-1.0));
                 glVertex3f(pA[fA[j*T+i][0]].x, pA[fA[j*T+i][0]].y, pA[fA[j*T+i][0]].z);
+                glTexCoord2f((i+1)/(F+0.0), j/(T-1.0));
                 glVertex3f(pA[fA[j*T+i][1]].x, pA[fA[j*T+i][1]].y, pA[fA[j*T+i][1]].z);
+                glTexCoord2f((i+1)/(F+0.0), (j+1)/(T-1.0));
                 glVertex3f(pA[fA[j*T+i][2]].x, pA[fA[j*T+i][2]].y, pA[fA[j*T+i][2]].z);
+                glTexCoord2f((i+1)/(F+0.0), (j+1)/(T-1.0));
                 glVertex3f(pA[fA[j*T+i][3]].x, pA[fA[j*T+i][3]].y, pA[fA[j*T+i][3]].z);
             glEnd();
         }
@@ -352,6 +342,7 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
     glPushMatrix();
     glTranslatef(0, 0, -1/2);
     glutSolidSphere(0.8, 30, 30);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
 
@@ -481,10 +472,7 @@ void redim(int l,int h)
   else
     glViewport((l-h)/2,0,h,h);
 }
-
-
-
-void loadJpegImage(char *fichier, unsigned char* image)
+void loadJpegImage(char *fichier)
 {
   struct jpeg_decompress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -502,16 +490,12 @@ void loadJpegImage(char *fichier, unsigned char* image)
 #elif __GNUC__
   if ((file = fopen(fichier,"rb")) == 0)
     {
-      fprintf(stderr,"Erreur : impossible d'ouvrir le fichier\n");
+      fprintf(stderr,"Erreur : impossible d'ouvrir le fichier texture.jpg\n");
       exit(1);
     }
 #endif
-
   jpeg_stdio_src(&cinfo, file);
   jpeg_read_header(&cinfo, TRUE);
-  im_larg=cinfo.image_width;
-  im_haut=cinfo.image_height;
-  image=(unsigned char *)malloc(im_haut*im_larg*3*sizeof(unsigned char));
   if (cinfo.jpeg_color_space==JCS_GRAYSCALE) {
     fprintf(stdout,"Erreur : l'image doit etre de type RGB\n");
     exit(1);
@@ -521,7 +505,7 @@ void loadJpegImage(char *fichier, unsigned char* image)
   ligne=image;
   while (cinfo.output_scanline<cinfo.output_height)
     {
-      ligne=image+3*cinfo.output_width*cinfo.output_scanline;
+      ligne=image+3*1024*cinfo.output_scanline;
       jpeg_read_scanlines(&cinfo,&ligne,1);
     }
   jpeg_finish_decompress(&cinfo);

@@ -101,10 +101,6 @@ int main(int argc,char **argv)
 void affichage()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  /*glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(-5+vue,5-vue,-5+vue, 5-vue, -20, 20);
-  gluLookAt(5.0, 5.0, 5.0, 0, 0, 0, 0.0, 1.0, 0.0);*/
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(-10+vue,10-vue,-10+vue, 10-vue, -50, 50);
@@ -113,8 +109,6 @@ void affichage()
   glLoadIdentity();
   glRotatef(angley, 0.0, 0.0, 1.0);
   glRotatef(anglex, 1.0, 0.0, 0.0);
-
-    //glBegin(GL_QUADS) ;glTexCoord2f(0,0) ;glVertex2f(0,0) ;glTexCoord2f(1,0) ;glVertex2f(1,0) ;glTexCoord2f(1,1) ;glVertex2f(1,1) ;glTexCoord2f(0,1) ;glVertex2f(0,1) ;glEnd() ;
 
     glDisable(GL_TEXTURE_2D);
     glColor3f(1, 1, 1);
@@ -146,6 +140,9 @@ void affichage()
     glPopMatrix();
 
     glPopMatrix();
+
+    lumieres();
+
 /*
   //Repère
     //axe x en rouge
@@ -168,7 +165,6 @@ void affichage()
     glEnd();
 
 */
-    lumieres();
   glutSwapBuffers();
 
 }
@@ -346,7 +342,7 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
     glPopMatrix();
 }
 
-/*Utilisation d'une lumière diffuse*/
+/*Utilisation de deux lumières*/
 void lumieres()
 {
     glEnable(GL_LIGHTING);
@@ -354,12 +350,21 @@ void lumieres()
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
 
-    GLfloat diffuse_lum[] = {1.0, 1.0, 1.0};
+    /*Première lumière*/
+    GLfloat diffuse_lum [] = {0.9, 0.9, 0.9, 1.0};
     glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuse_lum);
 
-    GLfloat coordonnees_lum [] = {0.0, 5.0, -8.0};
-    glLightfv(GL_LIGHT1,GL_POSITION,coordonnees_lum);
-
+    /*Seconde lumière*/
+    GLfloat coordonnees_lum1 [] = {-1.0, 2.0, 0.0, 1.0};
+    GLfloat diffuse_lum1 [] = {0.8, 0.8, 0.8, 1.0};
+    GLfloat ambient_lum1 [] = {0.1, 0.1, 0.1, 1.0};
+    GLfloat specular_lum1 [] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat spot [] = {-1.0, -1.0, 0.0};
+    glLightfv(GL_LIGHT1,GL_POSITION,coordonnees_lum1);
+    glLightfv(GL_LIGHT1,GL_DIFFUSE,diffuse_lum1);
+    glLightfv(GL_LIGHT1,GL_AMBIENT,ambient_lum1);
+    glLightfv(GL_LIGHT1,GL_SPECULAR,specular_lum1);
+    glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION, spot);
 }
 
 /*Animation activable des pates*/
@@ -374,7 +379,6 @@ void anim_deplacement()
         inverse_rot_patte = true;
     else if (rot_patte < 0 && inverse_rot_patte)
         inverse_rot_patte = false;
-    //glutPostRedisplay();
 }
 
 /*Animation automatique des mandibules*/
@@ -426,6 +430,7 @@ void clavier(unsigned char touche,int x,int y)
   }
 }
 
+/*Flèches directionnelles utilisées dans le mouvement de la caméra*/
 void directions(int touche, int x , int y)
 {
 	switch (touche) {

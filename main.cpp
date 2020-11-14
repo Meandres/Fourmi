@@ -42,8 +42,7 @@ void souris(int boutton, int etat,int x,int y);
 void sourismouv(int x,int y);
 void redim(int l,int h);
 void loadJpegImage(char *fichier);
-void affiche_abdomen(int T, int F, float r, float g, float b); //pour afficher un abdomen de la couleur dont les composants sont spécifiés en argument
-void affiche_abdomen(int T, int F, int indiceTex); //pour afficher un abdomen en utilisant la texture d'indice spécifié en parametre dans la liste des textures chargées
+void affiche_abdomen(int T, int F);
 void affiche_patte();
 void affiche_ensemble_pattes();
 void affiche_corps();
@@ -53,6 +52,7 @@ void lumieres();
 void idle_anim();
 void anim_deplacement();
 void directions(int touche, int x , int y);
+void affiche_sphere(float rad, int M, int P);
 
 int main(int argc,char **argv)
 
@@ -82,8 +82,6 @@ int main(int argc,char **argv)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 
-  glEnable(GL_TEXTURE_2D);
-
   /* Mise en place des fonctions de rappel */
   glutDisplayFunc(affichage);
   glutKeyboardFunc(clavier);
@@ -110,15 +108,16 @@ void affichage()
   glRotatef(angley, 0.0, 0.0, 1.0);
   glRotatef(anglex, 1.0, 0.0, 0.0);
 
-    glDisable(GL_TEXTURE_2D);
-    glColor3f(1, 1, 1);
 
     glPushMatrix();
     //corps
+    glColor3f(0.53125, 0.26953125, 0.07421875);
     affiche_corps();
     glPushMatrix();
+
+    //abdomen
     glTranslatef(0,0,diametre_corps*1.5);
-    affiche_abdomen(20, 20, 0.5, 1, 1);
+    affiche_abdomen(20, 20);
     glPopMatrix();
 
     //pattes
@@ -130,41 +129,20 @@ void affichage()
     glPushMatrix();
     glColor3f(0.4f, 0.4f, 0.4f); //gris
     glTranslatef(0, 0, (-diametre_corps)*1.3);
-    glutSolidSphere(diametre_tete/2, 10, 10);
+    glEnable(GL_TEXTURE_2D);
+    glutSolidSphere(diametre_tete/2, 4, 4);
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
     //Tete
     glPushMatrix();
     glTranslatef(diametre_tete/2, 0, (-diametre_corps)*2.5);
+    glColor3f(0.625, 0.3203125, 0.17578125);
     affiche_tete();
     glPopMatrix();
 
     glPopMatrix();
-
     lumieres();
-
-/*
-  //Repère
-    //axe x en rouge
-    glBegin(GL_LINES);
-        glColor3f(1.0,0.0,0.0);
-    	glVertex3f(0, 0, 0);
-    	glVertex3f(10, 0, 0);
-    glEnd();
-    //axe des y en vert
-    glBegin(GL_LINES);
-    	glColor3f(0.0,1.0,0.0);
-    	glVertex3f(0, 0, 0);
-    	glVertex3f(0, 10, 0);
-    glEnd();
-    //axe des z en bleu
-    glBegin(GL_LINES);
-    	glColor3f(0.0,0.0,1.0);
-    	glVertex3f(0, 0, 0);
-    	glVertex3f(0, 0, 10);
-    glEnd();
-
-*/
   glutSwapBuffers();
 
 }
@@ -194,7 +172,6 @@ void affiche_patte(){
 /*Toutes les pates de la fourmi*/
 void affiche_ensemble_pattes(){
     glPushMatrix();
-    glColor3f(1.0f, 0.0f, 0.0f);
     glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, diametre_corps/3);
     glRotatef(30+rot_patte, 1, 0, 0);
     glRotatef(rot_patte, 0, 1, 0);
@@ -202,14 +179,12 @@ void affiche_ensemble_pattes(){
     glPopMatrix();
 
     glPushMatrix();
-    glColor3f(0.0f, 1.0f, 0.0f);
     glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, 0);
     glRotatef(90-rot_patte, 1, 0, 0);
     affiche_patte();
     glPopMatrix();
 
     glPushMatrix();
-    glColor3f(0.0f, 0.0f, 1.0f);
     glTranslatef(3*diametre_corps/6, -3*diametre_corps/4, -diametre_corps/3);
     glRotatef(120+rot_patte, 1, 0, 0);
     glRotatef(rot_patte, 0, 1, 0);
@@ -218,7 +193,6 @@ void affiche_ensemble_pattes(){
     glPopMatrix();
 
     glPushMatrix();
-    glColor3f(1.0f, 0.0f, 0.0f);
     glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, diametre_corps/3);
     glRotatef(-30-rot_patte, 1, 0, 0);
     glRotatef(rot_patte, 0, 1, 0);
@@ -226,14 +200,12 @@ void affiche_ensemble_pattes(){
     glPopMatrix();
 
     glPushMatrix();
-    glColor3f(0.0f, 1.0f, 0.0f);
     glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, 0);
     glRotatef(-90+rot_patte, 1, 0, 0);
     affiche_patte();
     glPopMatrix();
 
     glPushMatrix();
-    glColor3f(0.0f, 0.0f, 1.0f);
     glTranslatef(3*diametre_corps/6, 3*diametre_corps/4, -diametre_corps/3);
     glRotatef(-120-rot_patte, 1, 0, 0);
     glRotatef(rot_patte, 0, 1, 0);
@@ -302,8 +274,9 @@ void affiche_tete(){
 
 /*Cette fonction sert à générer et à afficher l'abdomen de la fourmi
 Elle crée une primitive ressemblant grossièrement à une pomme de pin. La formule mathématique utilisée pour une vue de profil de cette primitive est f(x)=0.8*|cos(x)*(x)^(1/6)|
+Elle n'est cependant pas complète donc on ajoute une sphère.
 */
-void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
+void affiche_abdomen(int T, int F){ //T correspond au nombres de tranches, F aux nombres de faces par tranches
     Point pA[T*F];
     int fA[(T-1)*F][4];
     for(int j=0; j<T; j++){
@@ -323,7 +296,6 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
     for(int j=0; j<T-1; j++){
         for(int i=0; i<F; i++){
             glBegin(GL_QUADS);
-                //glColor3f(r, g, b);
                 glTexCoord2f(i/(F+0.0), j/(T-1.0));
                 glVertex3f(pA[fA[j*T+i][0]].x, pA[fA[j*T+i][0]].y, pA[fA[j*T+i][0]].z);
                 glTexCoord2f((i+1)/(F+0.0), j/(T-1.0));
@@ -337,9 +309,40 @@ void affiche_abdomen(int T, int F, float r, float g, float b){ //T correspond au
     }
     glPushMatrix();
     glTranslatef(0, 0, -1/2);
-    glutSolidSphere(0.8, 30, 30);
+    affiche_sphere(0.8, 30, 30);
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
+}
+void affiche_sphere(float rad, int M, int P){ //fonction du TP sur le système solaire
+    Point pS[P*M];
+    int fS[(P-1)*M][4];
+    for(int j=0; j<P; j++){
+        for(int i=0; i<M; i++){
+            pS[j*M+i]={rad*cos(2*i*M_PI/(M+0.0))*cos(-M_PI/2+M_PI*j/P), rad*sin(2*i*M_PI/(M+0.0))*cos(-M_PI/2+M_PI*j/P), rad*sin(-M_PI/2+M_PI*j/P)};
+        }
+    }
+    for(int j=0; j<P-1; j++){
+        for(int i=0; i<M; i++){
+            fS[j*M+i][0]=i+j*M;
+            fS[j*M+i][1]=(i+1)%M+j*M;
+            fS[j*M+i][2]=(i+1)%M+(j+1)*M;
+            fS[j*M+i][3]=i+(j+1)*M;
+        }
+    }
+    for(int j=0; j<P-1; j++){
+        for(int i=0; i<M; i++){
+            glBegin(GL_QUADS);
+                glTexCoord2f(i/(M+0.0), j/(P-1.0));
+                glVertex3f(pS[fS[j*M+i][0]].x, pS[fS[j*M+i][0]].y, pS[fS[j*M+i][0]].z);
+                glTexCoord2f((i+1)/(M+0.0), j/(P-1.0));
+                glVertex3f(pS[fS[j*M+i][1]].x, pS[fS[j*M+i][1]].y, pS[fS[j*M+i][1]].z);
+                glTexCoord2f((i+1)/(M+0.0), (j+1)/(P-1.0));
+                glVertex3f(pS[fS[j*M+i][2]].x, pS[fS[j*M+i][2]].y, pS[fS[j*M+i][2]].z);
+                glTexCoord2f((i+1)/(M+0.0), (j+1)/(P-1.0));
+                glVertex3f(pS[fS[j*M+i][3]].x, pS[fS[j*M+i][3]].y, pS[fS[j*M+i][3]].z);
+            glEnd();
+        }
+    }
 }
 
 /*Utilisation de deux lumières*/
@@ -366,6 +369,7 @@ void lumieres()
     glLightfv(GL_LIGHT1,GL_SPECULAR,specular_lum1);
     glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION, spot);
 }
+
 
 /*Animation activable des pates*/
 void anim_deplacement()
@@ -411,6 +415,7 @@ void clavier(unsigned char touche,int x,int y)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glutPostRedisplay();
+    break;
   case 'Z' : vue += 1;
     glutPostRedisplay();
     break; /*zoom arrière*/
@@ -495,7 +500,7 @@ void loadJpegImage(char *fichier)
 #elif __GNUC__
   if ((file = fopen(fichier,"rb")) == 0)
     {
-      fprintf(stderr,"Erreur : impossible d'ouvrir le fichier texture.jpg\n");
+      fprintf(stderr,"Erreur : impossible d'ouvrir le fichier de texture\n");
       exit(1);
     }
 #endif
